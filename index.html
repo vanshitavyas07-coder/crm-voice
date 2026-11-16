@@ -1,185 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-<base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Smart Sales CRM</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<title>Voice Add Lead - Smart Sales CRM</title>
 <style>
 :root{--bg:#f1f5f9;--card:#fff;--tx:#0f172a;--mut:#64748b;--bd:#e2e8f0;--pri:#4f46e5;--ok:#16a34a;--bad:#dc2626;--warn:#d97706}
 *{box-sizing:border-box}
 body{margin:0;font-family:Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
-header{background:#1e293b;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-header h1{margin:0;font-size:18px}
-header small{color:#94a3b8}
-.nav{display:flex;gap:4px}
-.nav button{background:transparent;color:#cbd5e1;padding:8px 16px}
-.nav button.on{background:var(--pri);color:#fff}
-main{padding:16px 20px;max-width:1500px;margin:auto}
-button{cursor:pointer;border:0;border-radius:6px;padding:8px 14px;font-size:13px;background:var(--pri);color:#fff}
-button.sec{background:#e2e8f0;color:var(--tx)}
-button.sm{padding:4px 9px;font-size:12px}
-button.del{background:#fee2e2;color:var(--bad)}
-button:disabled{opacity:.6;cursor:wait}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px}
-.kpi .l{color:var(--mut);font-size:12px}.kpi .v{font-size:24px;font-weight:700;margin-top:4px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:12px;margin-bottom:14px}
+header{background:#1e293b;color:#fff;padding:12px 20px}header h1{margin:0;font-size:18px}header small{color:#94a3b8}
+main{max-width:640px;margin:auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:12px}
 .card h3{margin:0 0 10px;font-size:14px}
-.ch{position:relative;height:250px}
-.fu{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);cursor:pointer;font-size:13px}
-.fu:last-child{border:0}
-.filters{margin-bottom:14px}
-.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
-.fgrid.hide{display:none}
-.fgrid label,.fg label{font-size:11px;color:var(--mut);display:block;margin-bottom:3px}
+button{cursor:pointer;border:0;border-radius:6px;padding:8px 14px;font-size:13px;background:var(--pri);color:#fff}
+button.sec{background:#e2e8f0;color:var(--tx)}button.sm{padding:4px 9px;font-size:12px}button:disabled{opacity:.6;cursor:not-allowed}
+button.big{width:100%;padding:16px;font-size:16px}
+input,select,textarea{padding:8px 9px;border:1px solid var(--bd);border-radius:6px;font:inherit;background:#fff;color:var(--tx);width:100%}
+label{font-size:11px;color:var(--mut);display:block;margin-bottom:3px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
 .fhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
-.fhead b{font-size:13px}
-.chip{background:#e0e7ff;color:#3730a3;border-radius:10px;padding:2px 9px;font-size:11px;margin-left:6px}
-input,select,textarea{padding:7px 9px;border:1px solid var(--bd);border-radius:6px;font:inherit;background:#fff;color:var(--tx);width:100%}
-.tw{overflow:auto}
-table{border-collapse:collapse;background:var(--card);table-layout:fixed}
-th,td{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top;white-space:normal;word-break:break-word}
-th{background:#f8fafc;font-size:12px;color:var(--mut);position:sticky;top:0;z-index:2}
-th:first-child,td:first-child{position:sticky;left:0;background:#fff;z-index:1;box-shadow:2px 0 0 var(--bd)}
-th:first-child{background:#f8fafc;z-index:3}
-td select{width:100%;padding:4px}
-td small{color:var(--mut)}
-.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;color:#334155;cursor:pointer}
-.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;color:var(--mut);margin-top:3px}
-.over{color:var(--bad);font-weight:600}.today{color:var(--warn);font-weight:600}
-.badge{padding:2px 8px;border-radius:10px;font-size:11px;background:#e0e7ff;color:#3730a3;display:inline-block}
-.tag{padding:2px 8px;border-radius:10px;font-size:11px;background:#fef3c7;color:#92400e;display:inline-block}
-.screen{display:none}.screen.on{display:block}
-body.fit{height:100vh;overflow:hidden;display:flex;flex-direction:column}
-body.fit main{flex:1;min-height:0;display:flex;flex-direction:column;width:100%}
-body.fit .filters{flex:none;margin-bottom:10px}
-body.fit #s_leads.on{flex:1;min-height:0;display:flex;flex-direction:column}
-body.fit #s_leads .card{flex:1;min-height:0;display:flex;flex-direction:column}
-body.fit .tw{flex:1;min-height:0}
-.ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);align-items:center;justify-content:center;padding:14px;z-index:5}
-.ov .box{background:#fff;border-radius:12px;padding:18px;width:100%;max-width:620px;max-height:92vh;overflow:auto}
-.ov .box.wide{max-width:760px}
-.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.full{grid-column:1/-1}
 .chk{display:flex;flex-wrap:wrap;gap:6px 14px}.chk label{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--tx);margin:0}.chk input{width:auto}
-.bub{background:#f1f5f9;border-radius:8px;padding:8px 10px;margin:6px 0;white-space:pre-wrap;word-break:break-word}
-.bub .meta{font-size:11px;color:var(--mut);margin-bottom:2px}
-.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:13px;margin:10px 0}
-.info span{color:var(--mut);font-size:11px;display:block}
-.pre{white-space:pre-wrap;word-break:break-word}
-.stbl{width:100%;table-layout:auto}.stbl td,.stbl th{padding:6px 8px}
+.ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);align-items:center;justify-content:center;padding:14px;z-index:5}
+.ov .box{background:#fff;border-radius:12px;padding:18px;width:100%;max-width:620px;max-height:94vh;overflow:auto}
 .vq{font-size:20px;font-weight:600;margin:4px 0 4px;line-height:1.35}
 .vbar{height:6px;background:#e2e8f0;border-radius:4px;overflow:hidden}.vbar>div{height:100%;background:var(--pri);transition:width .3s}
 .mic{width:46px;height:46px;border-radius:50%;padding:0;font-size:20px;flex:none}
 .mic.rec{background:var(--bad);animation:pulse 1s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}100%{box-shadow:0 0 0 14px rgba(220,38,38,0)}}
 .vs{font-size:13px;color:var(--mut);min-height:20px}.vs.ok{color:var(--ok)}.vs.warn{color:var(--warn)}
+.cs{font-size:13px;margin-top:8px;color:var(--mut)}.cs.ok{color:var(--ok)}.cs.warn{color:var(--bad)}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 16px;border-radius:8px;display:none;z-index:9;max-width:90vw}
-@media(max-width:520px){.fg,.info{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+@media(max-width:520px){.fg{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header>
-  <div><h1>📈 Smart Sales CRM</h1><small id="who"></small></div>
-  <div class="nav">
-    <button id="nb_dash" class="on" onclick="go('dash')">📊 Dashboard</button>
-    <button id="nb_leads" onclick="go('leads')">📋 Leads</button>
-  </div>
-  <div><button class="sec" onclick="load()">⟳ Refresh</button> <button class="sec" onclick="openSettings()">⚙ Settings</button> <button class="sec" onclick="openVoice()">🎙 Voice Add</button> <button onclick="openForm()">+ Add Lead</button></div>
-</header>
+<header><h1>🎙 Voice Add Lead</h1><small>Smart Sales CRM</small></header>
 <main>
-  <div class="card filters">
-    <div class="fhead"><span><b>🎛 Filters</b><span class="chip" id="fCount"></span></span>
-      <span><button class="sm sec" id="fToggle" onclick="toggleFilters()">Hide filters</button> <button class="sm sec" onclick="resetFilters()">Reset</button></span></div>
-    <div class="fgrid" id="fGrid">
-      <div><label>Search</label><input id="q" placeholder="Name, company, phone, feedback..." oninput="renderAll()"></div>
-      <div><label>Stage</label><select id="fStage" onchange="renderAll()"></select></div>
-      <div><label>Owner</label><select id="fOwner" onchange="renderAll()"></select></div>
-      <div><label>Source</label><select id="fSource" onchange="renderAll()"></select></div>
-      <div><label>Enquiry For</label><select id="fEnq" onchange="renderAll()"></select></div>
-      <div><label>Follow-up</label><select id="fDue" onchange="renderAll()">
-        <option value="">All</option><option value="due">Overdue + Today</option><option value="over">Overdue</option>
-        <option value="today">Today</option><option value="week">Next 7 days</option><option value="none">Not set (open leads)</option></select></div>
-      <div><label>Created from</label><input type="date" id="dFrom" onchange="renderAll()"></div>
-      <div><label>Created to</label><input type="date" id="dTo" onchange="renderAll()"></div>
-      <div><label>Min value (₹)</label><input type="number" id="vMin" min="0" oninput="renderAll()"></div>
-      <div><label>Max value (₹)</label><input type="number" id="vMax" min="0" oninput="renderAll()"></div>
+  <div class="card">
+    <h3>1. Connect (one time per device)</h3>
+    <div class="fg">
+      <div class="full"><label>Web app URL (the deployment that is set to "Anyone")</label><input id="c_url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div class="full"><label>API key (from createVoiceApiKey)</label><input id="c_key" type="password" placeholder="paste the key"></div>
     </div>
+    <div style="margin-top:10px"><button onclick="connect()">Connect</button></div>
+    <div id="c_status" class="cs"></div>
   </div>
-
-  <div class="screen on" id="s_dash">
-    <div class="kpis" id="kpis"></div>
-    <div class="grid">
-      <div class="card"><h3>Pipeline by Stage (leads)</h3><div class="ch"><canvas id="c_stage"></canvas></div></div>
-      <div class="card"><h3>Lead Sources</h3><div class="ch"><canvas id="c_src"></canvas></div></div>
-      <div class="card"><h3>Team Performance (₹ Won vs Open)</h3><div class="ch"><canvas id="c_team"></canvas></div></div>
-      <div class="card"><h3>Leads Created (month-wise)</h3><div class="ch"><canvas id="c_trend"></canvas></div></div>
-      <div class="card"><h3>Enquiry For (what they contacted us about)</h3><div class="ch"><canvas id="c_enq"></canvas></div></div>
-      <div class="card"><h3>Pipeline Value by Stage (₹)</h3><div class="ch"><canvas id="c_val"></canvas></div></div>
-      <div class="card"><h3>⏰ Follow-ups (Overdue / Today)</h3><div id="fuList"></div></div>
-      <div class="card"><h3>📅 Open leads with no follow-up date</h3><div id="noFuList"></div></div>
-    </div>
+  <div class="card">
+    <h3>2. Add a lead</h3>
+    <button class="big" id="startBtn" disabled onclick="openVoice()">🎙 Start voice entry</button>
+    <p style="color:var(--mut);font-size:12px;margin:8px 0 0">Open this page in Chrome or Edge and allow the microphone when asked. On a phone, use “Add to Home screen” for one-tap access.</p>
   </div>
-
-  <div class="screen" id="s_leads">
-    <div class="card">
-      <div class="fhead"><b>All Leads</b><span id="count" style="color:var(--mut);font-size:12px"></span></div>
-      <div class="tw"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
-    </div>
-  </div>
+  <div class="card"><h3>Added in this session</h3><div id="log" style="color:var(--mut)">Nothing yet.</div></div>
 </main>
 
-<!-- ADD / EDIT LEAD -->
-<div class="ov" id="modal"><div class="box">
-  <h3 id="mTitle" style="margin-top:0">Add Lead</h3>
-  <div class="fg">
-    <div><label>Name *</label><input id="f_Name"></div>
-    <div><label>Company</label><input id="f_Company"></div>
-    <div><label>Phone</label><input id="f_Phone"></div>
-    <div><label>Email</label><input id="f_Email"></div>
-    <div><label>Source</label><select id="f_Source"></select></div>
-    <div><label>Stage</label><select id="f_Stage"></select></div>
-    <div><label>Deal Value (₹)</label><input id="f_Value" type="number" min="0"></div>
-    <div><label>Owner (an email is sent when a lead is assigned)</label><select id="f_Owner"></select></div>
-    <div class="full"><label>Enquiry For (what they contacted us about)</label><div class="chk" id="f_EnqBox"></div></div>
-    <div class="full"><label>Enquiry Details (requirement / package details)</label><textarea id="f_EnquiryDetails" rows="2"></textarea></div>
-    <div class="full"><label>Next Follow-up</label><input id="f_NextFollowUp" type="date"></div>
-    <div class="full"><label>Team Feedback / Notes</label><textarea id="f_Notes" rows="4"></textarea></div>
-    <div class="full fg" id="f_custom" style="padding:0"></div>
-  </div>
-  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
-    <button class="sec" onclick="closeForm()">Cancel</button>
-    <button id="saveBtn" onclick="save()">Save</button>
-  </div>
-</div></div>
-
-<!-- LEAD DETAIL + TEAM FEEDBACK -->
-<div class="ov" id="dmodal"><div class="box wide">
-  <div id="dBody"></div>
-</div></div>
-
-<!-- SETTINGS: TEAM + CUSTOM COLUMNS -->
-<div class="ov" id="smodal"><div class="box wide">
-  <div class="fhead"><h3 style="margin:0">⚙ Settings</h3><button class="sm sec" onclick="closeSettings()">Close</button></div>
-  <h4 style="margin:14px 0 6px">Team (owners and assignment emails)</h4>
-  <table class="stbl"><tbody id="sTeam"></tbody></table>
-  <div class="fg" style="margin-top:8px;grid-template-columns:1fr 1fr auto;align-items:end">
-    <div><label>Name</label><input id="tn_name"></div>
-    <div><label>Email</label><input id="tn_email" placeholder="name@company.com"></div>
-    <button onclick="addTeam()">Add member</button>
-  </div>
-  <h4 style="margin:20px 0 6px">Custom columns</h4>
-  <table class="stbl"><tbody id="sCols"></tbody></table>
-  <div class="fg" style="margin-top:8px;grid-template-columns:1fr 130px auto;align-items:end">
-    <div><label>Column name</label><input id="cn_name" placeholder="e.g. Budget Range"></div>
-    <div><label>Type</label><select id="cn_type" onchange="$('cn_optw').style.display=this.value==='dropdown'?'block':'none'"><option value="text">Text</option><option value="number">Number</option><option value="date">Date</option><option value="dropdown">Dropdown</option></select></div>
-    <button onclick="addCol()">Add column</button>
-    <div class="full" id="cn_optw" style="display:none"><label>Dropdown options (comma separated)</label><input id="cn_opts" placeholder="Option 1, Option 2, Option 3"></div>
-  </div>
-  <p style="color:var(--mut);font-size:12px;margin-bottom:0">New columns appear in the Add/Edit form and the Leads table, and are saved as real columns in the Leads sheet.</p>
-</div></div>
 <!-- VOICE ADD -->
 <div class="ov" id="vmodal"><div class="box">
   <div class="fhead"><h3 style="margin:0">🎙 Voice Add Lead</h3><button class="sm sec" onclick="closeVoice()">Close</button></div>
@@ -219,251 +92,41 @@ body.fit .tw{flex:1;min-height:0}
 const STAGES=['New','Contacted','Qualified','Proposal','Negotiation','Won','Lost'];
 const SOURCES=['Sales Enquiry Form','IJ Website','Website','Google Forms','Exhibition','IIJS','JJS','GJS','Competitor Magazine','Social Media','Referral','Existing Client','Roadshow / Trip','Diamond Times Newsletter','Other'];
 const ENQ=['Brand Promotion','Event & Award Participation','Content & Thought Leadership','Other'];
-const COLORS=['#4f46e5','#06b6d4','#16a34a','#f59e0b','#ef4444','#8b5cf6','#ec4899','#64748b'];
-let leads=[],team=[],columns=[],user='',editId=null,detailId=null,charts={},screen='dash';
-let filtersOpen={dash:true,leads:false};
+let team=[],leads=[],columns=[];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const inr=n=>'₹'+Number(n||0).toLocaleString('en-IN');
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-const todayStr=()=>ymd(new Date());
-const plus=n=>{const d=new Date();d.setDate(d.getDate()+n);return ymd(d)};
-const isOpen=l=>l.Stage!=='Won'&&l.Stage!=='Lost';
 const opts=(a,sel)=>a.map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
-const ownerNames=cur=>[...new Set(team.map(t=>t.name).concat(leads.map(x=>x.Owner).filter(Boolean)).concat(cur?[cur]:[]))].sort();
-const isMeta=p=>/^(Pipeline|Original stage): /.test(p);
-const paras=n=>String(n||'').split(/\n\n+/).map(s=>s.trim()).filter(Boolean);
-const fbParts=n=>paras(n).filter(p=>!isMeta(p));
-const metaOf=n=>paras(n).filter(isMeta).join('\n');
-
+const ownerNames=cur=>[...new Set(team.map(t=>t.name).concat(cur?[cur]:[]))].sort();
 function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',4200)}
-function fail(e){document.querySelectorAll('button:disabled').forEach(b=>b.disabled=false);toast('❌ '+(e.message||e));renderAll()}
-function done(r,msg){leads=r.leads;renderAll(true);toast(r.notice||msg)}
+function fail(e){document.querySelectorAll('button:disabled').forEach(b=>{if(b.id!=='startBtn')b.disabled=false});toast('❌ '+(e.message||e))}
+const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
 
-/* ---------- navigation / filters panel ---------- */
-function applyFilters(){$('fGrid').classList.toggle('hide',!filtersOpen[screen]);$('fToggle').textContent=filtersOpen[screen]?'Hide filters':'Show filters'}
-function toggleFilters(){filtersOpen[screen]=!filtersOpen[screen];applyFilters()}
-function go(s){
-  screen=s;document.body.classList.toggle('fit',s==='leads');applyFilters();
-  ['dash','leads'].forEach(x=>{$('s_'+x).classList.toggle('on',x===s);$('nb_'+x).classList.toggle('on',x===s)});
-  renderAll();
+async function apiCall(action,payload){
+  const url=store.get('crm_voice_url'),key=store.get('crm_voice_key');
+  const res=await fetch(url,{method:'POST',redirect:'follow',body:JSON.stringify(Object.assign({action,key},payload||{}))});
+  const txt=await res.text();let j;
+  try{j=JSON.parse(txt)}catch(e){throw new Error('The web app did not return data. Check the URL, and that this deployment has access set to "Anyone".')}
+  if(!j.ok)throw new Error(j.error||'Request failed');
+  return j;
 }
-function load(){
-  google.script.run.withSuccessHandler(r=>{user=r.user;leads=r.leads;team=r.team;columns=r.columns;
-    $('who').textContent=user?('Logged in: '+user):'';renderAll(true)}).withFailureHandler(fail).apiInit();
+function setConn(m,c){const e=$('c_status');e.textContent=m;e.className='cs '+(c||'')}
+async function connect(){
+  const url=$('c_url').value.trim(),key=$('c_key').value.trim();
+  if(!url||!key){setConn('Please enter both the web app URL and the API key.','warn');return}
+  store.set('crm_voice_url',url);store.set('crm_voice_key',key);setConn('Connecting…');
+  try{
+    const r=await apiCall('init');
+    team=(r.team||[]).map(n=>({name:n}));leads=(r.sources||[]).map(s=>({Source:s}));
+    $('startBtn').disabled=false;setConn('✅ Connected · '+team.length+' team members loaded','ok');
+  }catch(e){$('startBtn').disabled=true;setConn('❌ '+e.message,'warn')}
 }
-
-/* ---------- filters ---------- */
-const FIDS=['q','fStage','fOwner','fSource','fEnq','fDue','dFrom','dTo','vMin','vMax'];
-function fillFilterOptions(){
-  const cur={s:$('fStage').value,o:$('fOwner').value,r:$('fSource').value,e:$('fEnq').value};
-  const srcs=[...new Set(SOURCES.concat(leads.map(l=>l.Source).filter(Boolean)))];
-  $('fStage').innerHTML='<option value="">All</option>'+opts(STAGES,cur.s);
-  $('fOwner').innerHTML='<option value="">All</option>'+opts(ownerNames(),cur.o);
-  $('fSource').innerHTML='<option value="">All</option>'+opts(srcs,cur.r);
-  $('fEnq').innerHTML='<option value="">All</option>'+opts(ENQ,cur.e)+`<option value="__none" ${cur.e==='__none'?'selected':''}>Not specified</option>`;
+function addedLog(o,notice){
+  const el=$('log');if(el.dataset.empty!=='0'){el.innerHTML='';el.dataset.empty='0'}
+  const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  el.insertAdjacentHTML('afterbegin',`<div style="padding:6px 0;border-bottom:1px solid var(--bd);color:var(--tx)">✅ <b>${esc(o.Name)}</b>${o.Company?' · '+esc(o.Company):''} <small style="color:var(--mut)">${t}${notice?' · '+esc(notice):''}</small></div>`);
+  toast('✅ Lead saved');
 }
-function resetFilters(){FIDS.forEach(id=>$(id).value='');renderAll()}
-function activeFilters(){return FIDS.filter(id=>$(id).value!=='').length}
-function filtered(){
-  const q=$('q').value.toLowerCase().trim(),s=$('fStage').value,o=$('fOwner').value,src=$('fSource').value,enq=$('fEnq').value,
-        d=$('fDue').value,from=$('dFrom').value,to=$('dTo').value,
-        vmin=$('vMin').value===''?null:Number($('vMin').value),vmax=$('vMax').value===''?null:Number($('vMax').value),
-        t=todayStr(),w=plus(7);
-  return leads.filter(l=>{
-    if(s&&l.Stage!==s)return false;
-    if(o&&l.Owner!==o)return false;
-    if(src&&l.Source!==src)return false;
-    if(enq==='__none'){if(l.EnquiryFor)return false}else if(enq&&!(l.EnquiryFor||'').includes(enq))return false;
-    if(from&&(!l.Created||l.Created<from))return false;
-    if(to&&(!l.Created||l.Created>to))return false;
-    if(vmin!==null&&l.Value<vmin)return false;
-    if(vmax!==null&&l.Value>vmax)return false;
-    if(d){
-      const f=l.NextFollowUp;
-      if(!isOpen(l))return false;
-      if(d==='none'){if(f)return false}
-      else{
-        if(!f)return false;
-        if(d==='due'&&f>t)return false;
-        if(d==='over'&&f>=t)return false;
-        if(d==='today'&&f!==t)return false;
-        if(d==='week'&&(f<t||f>w))return false;
-      }
-    }
-    if(q&&![l.Name,l.Company,l.Phone,l.Email,l.Notes,l.Owner,l.EnquiryFor,l.EnquiryDetails].concat(Object.values(l.Custom||{})).join(' ').toLowerCase().includes(q))return false;
-    return true;
-  });
-}
-
-/* ---------- render ---------- */
-function renderAll(refreshOpts){
-  if(refreshOpts)fillFilterOptions();
-  const rows=filtered(),n=activeFilters();
-  $('fCount').textContent=n?(n+' active · '+rows.length+' of '+leads.length+' leads'):(leads.length+' leads');
-  if(screen==='dash')renderDash(rows);else renderTable(rows);
-  if(detailId&&$('dmodal').style.display==='flex')renderDetail();
-}
-function chart(id,cfg){
-  if(typeof Chart==='undefined')return;
-  if(charts[id])charts[id].destroy();
-  cfg.options=Object.assign({responsive:true,maintainAspectRatio:false},cfg.options||{});
-  charts[id]=new Chart($(id),cfg);
-}
-function fuRows(list,t,withDate){
-  return list.length?list.slice(0,8).map(l=>`<div class="fu" onclick="openDetail('${esc(l.ID)}')"><span>${esc(l.Name)} <small style="color:var(--mut)">${esc(l.Owner||'Unassigned')}</small></span>${withDate?`<span class="${l.NextFollowUp<t?'over':'today'}">${esc(l.NextFollowUp)}</span>`:`<span class="tag">Set date</span>`}</div>`).join('')+(list.length>8?`<div style="color:var(--mut);font-size:12px;padding-top:6px">+ ${list.length-8} more (use the Follow-up filter)</div>`:''):'<span style="color:var(--mut)">All clear ✅</span>';
-}
-function renderDash(rows){
-  const t=todayStr(),open=rows.filter(isOpen),won=rows.filter(l=>l.Stage==='Won'),lost=rows.filter(l=>l.Stage==='Lost');
-  const sum=a=>a.reduce((s,l)=>s+l.Value,0);
-  const due=open.filter(l=>l.NextFollowUp&&l.NextFollowUp<=t),noFu=open.filter(l=>!l.NextFollowUp);
-  const wr=won.length+lost.length?Math.round(won.length/(won.length+lost.length)*100):0;
-  $('kpis').innerHTML=[['Total Leads',rows.length],['Open Pipeline',inr(sum(open))],['Won Revenue',inr(sum(won))],['Win Rate',wr+'%'],['Avg Deal (Won)',inr(won.length?sum(won)/won.length:0)],['Follow-ups Due',due.length],['No Follow-up Date',noFu.length]]
-    .map(k=>`<div class="card kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div></div>`).join('');
-  chart('c_stage',{type:'bar',data:{labels:STAGES,datasets:[{label:'Leads',data:STAGES.map(s=>rows.filter(l=>l.Stage===s).length),backgroundColor:COLORS[0]}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-  const src={};rows.forEach(l=>{const k=l.Source||'Unknown';src[k]=(src[k]||0)+1});
-  chart('c_src',{type:'doughnut',data:{labels:Object.keys(src),datasets:[{data:Object.values(src),backgroundColor:COLORS}]},options:{plugins:{legend:{position:'right'}}}});
-  const ow={};rows.forEach(l=>{const k=l.Owner||'Unassigned';ow[k]=ow[k]||{w:0,o:0};if(l.Stage==='Won')ow[k].w+=l.Value;else if(isOpen(l))ow[k].o+=l.Value});
-  const on=Object.keys(ow);
-  chart('c_team',{type:'bar',data:{labels:on,datasets:[{label:'Won ₹',data:on.map(k=>ow[k].w),backgroundColor:'#16a34a'},{label:'Open ₹',data:on.map(k=>ow[k].o),backgroundColor:'#f59e0b'}]},options:{scales:{y:{beginAtZero:true}}}});
-  const mo={};rows.forEach(l=>{const m=(l.Created||'').slice(0,7);if(m)mo[m]=(mo[m]||0)+1});
-  const ml=Object.keys(mo).sort();
-  chart('c_trend',{type:'line',data:{labels:ml,datasets:[{label:'Leads',data:ml.map(m=>mo[m]),borderColor:COLORS[0],backgroundColor:'rgba(79,70,229,.15)',fill:true,tension:.3}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-  const eq={};rows.forEach(l=>{(l.EnquiryFor?l.EnquiryFor.split(', '):['Not specified']).forEach(k=>eq[k]=(eq[k]||0)+1)});
-  chart('c_enq',{type:'bar',data:{labels:Object.keys(eq),datasets:[{label:'Leads',data:Object.values(eq),backgroundColor:COLORS[3]}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}});
-  chart('c_val',{type:'bar',data:{labels:STAGES,datasets:[{label:'Value ₹',data:STAGES.map(s=>sum(rows.filter(l=>l.Stage===s))),backgroundColor:COLORS[1]}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}});
-  due.sort((a,b)=>a.NextFollowUp.localeCompare(b.NextFollowUp));
-  $('fuList').innerHTML=fuRows(due,t,true);
-  $('noFuList').innerHTML=fuRows(noFu,t,false);
-}
-function fuCell(l,t){
-  const f=l.NextFollowUp;
-  if(!isOpen(l))return esc(f||'-');
-  if(!f)return '<span class="tag">Not set</span>';
-  if(f<t)return `<span class="over">${esc(f)}</span><br><small class="over">Overdue</small>`;
-  if(f===t)return `<span class="today">${esc(f)}</span><br><small class="today">Today</small>`;
-  return esc(f);
-}
-function tableCols(){
-  return [['Lead',210],['Contact',190],['Source',120],['Enquiry For',220],['Stage',125],['Value (₹)',95],['Owner',150],['Team Feedback',280],['Created',95],['Last Updated',95,'Date of the last status (stage) change'],['Follow-up',115]]
-    .concat(columns.map(c=>[c.name,140])).concat([['Actions',150]]);
-}
-function renderTable(rows){
-  const t=todayStr(),cols=tableCols();
-  $('thead').innerHTML='<tr>'+cols.map(c=>`<th style="width:${c[1]}px" ${c[2]?`title="${esc(c[2])}"`:''}>${esc(c[0])}</th>`).join('')+'</tr>';
-  $('tbl').style.width=cols.reduce((s,c)=>s+c[1],0)+'px';
-  rows=rows.slice().sort((a,b)=>(b.StatusUpdated||b.Updated||'').localeCompare(a.StatusUpdated||a.Updated||''));
-  const ow=ownerNames();
-  $('tbody').innerHTML=rows.map(l=>{
-    const id=esc(l.ID),fb=fbParts(l.Notes),last=fb.length?fb[fb.length-1]:'';
-    return `<tr><td><b>${esc(l.Name)}</b>${l.Company?`<br><small>${esc(l.Company)}</small>`:''}</td>
-    <td>${esc(l.Phone)}${l.Email?`<br><small>${esc(l.Email)}</small>`:''}</td>
-    <td><span class="badge">${esc(l.Source||'-')}</span></td>
-    <td>${l.EnquiryFor?`<span class="badge">${esc(l.EnquiryFor)}</span>`:'-'}${l.EnquiryDetails?`<div class="clamp2" title="${esc(l.EnquiryDetails)}">${esc(l.EnquiryDetails.replace(/\n/g,' · '))}</div>`:''}</td>
-    <td><select onchange="stage('${id}',this.value)">${opts(STAGES,l.Stage)}</select></td>
-    <td>${inr(l.Value)}</td>
-    <td><select onchange="owner('${id}',this.value)"><option value="">Unassigned</option>${opts(ow,l.Owner)}</select></td>
-    <td>${last?`<div class="clamp" onclick="openDetail('${id}')" title="Click to read the full conversation">${esc(last)}</div>${fb.length>1?`<small>${fb.length} entries</small>`:''}`:'<small>—</small>'}</td>
-    <td>${esc(l.Created||'-')}</td><td>${esc(l.StatusUpdated||l.Updated||'-')}</td><td>${fuCell(l,t)}</td>
-    ${columns.map(c=>`<td>${esc((l.Custom||{})[c.name]||'')}</td>`).join('')}
-    <td><button class="sm" onclick="openDetail('${id}')">Open</button> <button class="sm sec" onclick="openForm('${id}')">Edit</button> <button class="sm del" onclick="del('${id}')">Del</button></td></tr>`}).join('')||`<tr><td colspan="${cols.length}" style="text-align:center;color:var(--mut)">No leads found</td></tr>`;
-  $('count').textContent=rows.length+' of '+leads.length+' leads';
-}
-
-/* ---------- lead detail + feedback ---------- */
-function openDetail(id){detailId=id;renderDetail();$('dmodal').style.display='flex';const b=$('dBody').querySelector('.log');if(b)b.scrollTop=b.scrollHeight}
-function closeDetail(){detailId=null;$('dmodal').style.display='none'}
-function renderDetail(){
-  const l=leads.find(x=>x.ID===detailId);
-  if(!l){closeDetail();return}
-  const t=todayStr(),fb=fbParts(l.Notes),meta=metaOf(l.Notes);
-  const bubbles=fb.length?fb.map(p=>{const m=p.match(/^\[([^\]]+)\]\s*([\s\S]*)$/);return m?`<div class="bub"><div class="meta">${esc(m[1])}</div>${esc(m[2])}</div>`:`<div class="bub">${esc(p)}</div>`}).join(''):'<div style="color:var(--mut)">No feedback yet. Add the first entry below.</div>';
-  const info=[['Contact',l.Phone+(l.Email?' · '+l.Email:'')],['Source',l.Source],['Stage',l.Stage],['Owner',l.Owner||'Unassigned'],['Deal value',inr(l.Value)],['Created',l.Created],['Last updated (status)',l.StatusUpdated||l.Updated],['Follow-up',l.NextFollowUp||'Not set'],['Enquiry for',l.EnquiryFor||'-']].concat(columns.map(c=>[c.name,(l.Custom||{})[c.name]||'-']));
-  $('dBody').innerHTML=`<div class="fhead"><div><h3 style="margin:0">${esc(l.Name)}</h3><small style="color:var(--mut)">${esc(l.Company)}</small></div><div><button class="sm sec" onclick="closeDetail();openForm('${esc(l.ID)}')">Edit lead</button> <button class="sm sec" onclick="closeDetail()">Close</button></div></div>
-  <div class="info">${info.map(i=>`<div><span>${esc(i[0])}</span>${esc(i[1])}</div>`).join('')}</div>
-  ${l.EnquiryDetails?`<div class="info" style="grid-template-columns:1fr"><div><span>Enquiry details</span><div class="pre">${esc(l.EnquiryDetails)}</div></div></div>`:''}
-  <h4 style="margin:12px 0 4px">Team feedback / conversation</h4>
-  <div class="log" style="max-height:260px;overflow:auto">${bubbles}</div>
-  <div class="fg" style="margin-top:10px">
-    <div class="full"><label>Add feedback</label><textarea id="d_note" rows="3" placeholder="What was discussed? Next step?"></textarea></div>
-    <div><label>Next follow-up date ${l.NextFollowUp?'':'(not set yet)'}</label><input type="date" id="d_fu" value="${esc(l.NextFollowUp)}"></div>
-    <div style="display:flex;align-items:end;justify-content:flex-end"><button id="noteBtn" onclick="addNote()">Add feedback</button></div>
-  </div>
-  ${meta?`<div style="margin-top:12px;font-size:11px;color:var(--mut)" class="pre">${esc(meta)}</div>`:''}`;
-}
-function addNote(){
-  const txt=$('d_note').value.trim();
-  if(!txt){toast('Please type some feedback first');return}
-  $('noteBtn').disabled=true;
-  google.script.run.withSuccessHandler(r=>{done(r,'Feedback added');const b=$('dBody').querySelector('.log');if(b)b.scrollTop=b.scrollHeight}).withFailureHandler(fail).apiAddNote(detailId,txt,$('d_fu').value);
-}
-
-/* ---------- add / edit lead ---------- */
-const F=['Name','Company','Phone','Email','Value','NextFollowUp','Notes','EnquiryDetails'];
-function buildCustom(l){
-  $('f_custom').innerHTML=columns.map((c,i)=>{
-    const v=(l.Custom&&l.Custom[c.name])||'';
-    const inp=c.type==='dropdown'?`<select id="cf_${i}"><option value=""></option>${opts(c.options.concat(v&&!c.options.includes(v)?[v]:[]),v)}</select>`
-      :`<input id="cf_${i}" type="${c.type==='number'?'number':c.type==='date'?'date':'text'}" value="${esc(v)}">`;
-    return `<div><label>${esc(c.name)}</label>${inp}</div>`}).join('');
-}
-function selOpts(id,list,cur,blank){
-  const a=list.slice();if(cur&&!a.includes(cur))a.push(cur);
-  $(id).innerHTML=(blank?'<option value="">— Unassigned —</option>':'')+a.map(x=>`<option ${x===cur?'selected':''}>${esc(x)}</option>`).join('');
-}
-function openForm(id){
-  editId=id||null;
-  const l=id?leads.find(x=>x.ID===id):{Stage:'New',Source:SOURCES[0],Owner:'',EnquiryFor:'',Custom:{}};
-  $('mTitle').textContent=id?'Edit Lead':'Add Lead';
-  F.forEach(k=>$('f_'+k).value=l[k]==null?'':l[k]);
-  selOpts('f_Source',[...new Set(SOURCES.concat(leads.map(x=>x.Source).filter(Boolean)))],l.Source);
-  selOpts('f_Stage',STAGES,l.Stage);
-  selOpts('f_Owner',ownerNames(),l.Owner,true);
-  const sel=(l.EnquiryFor||'').split(', ').filter(Boolean);
-  $('f_EnqBox').innerHTML=ENQ.map(x=>`<label><input type="checkbox" value="${esc(x)}" ${sel.includes(x)?'checked':''}>${esc(x)}</label>`).join('');
-  buildCustom(l);
-  $('modal').style.display='flex';$('f_Name').focus();
-}
-function closeForm(){$('modal').style.display='none'}
-function save(){
-  const o={};F.forEach(k=>o[k]=$('f_'+k).value);
-  o.Source=$('f_Source').value;o.Stage=$('f_Stage').value;o.Owner=$('f_Owner').value;
-  o.EnquiryFor=[...document.querySelectorAll('#f_EnqBox input:checked')].map(x=>x.value).join(', ');
-  o.Custom={};columns.forEach((c,i)=>o.Custom[c.name]=$('cf_'+i).value);
-  if(!o.Name.trim()){toast('Please enter a name');return}
-  if(editId){const old=leads.find(x=>x.ID===editId);o.ID=editId;o.Created=old.Created}
-  $('saveBtn').disabled=true;
-  google.script.run.withSuccessHandler(r=>{$('saveBtn').disabled=false;closeForm();done(r,editId?'✅ Lead updated':'✅ Lead added')}).withFailureHandler(fail).apiSaveLead(o);
-}
-function stage(id,s){google.script.run.withSuccessHandler(r=>done(r,'Stage updated')).withFailureHandler(fail).apiUpdateStage(id,s)}
-function owner(id,o){toast('Saving…');google.script.run.withSuccessHandler(r=>done(r,'Owner updated')).withFailureHandler(fail).apiUpdateOwner(id,o)}
-function del(id){
-  const l=leads.find(x=>x.ID===id);
-  if(!confirm('Delete "'+l.Name+'"? This cannot be undone.'))return;
-  google.script.run.withSuccessHandler(r=>done(r,'Lead deleted')).withFailureHandler(fail).apiDeleteLead(id);
-}
-
-/* ---------- settings: team + custom columns ---------- */
-function openSettings(){renderSettings();$('smodal').style.display='flex'}
-function closeSettings(){$('smodal').style.display='none'}
-function renderSettings(){
-  $('sTeam').innerHTML=team.length?team.map((t,i)=>`<tr><td style="width:34%">${esc(t.name)}</td><td><input id="te_${i}" value="${esc(t.email)}" placeholder="email for assignment mails"></td><td style="white-space:nowrap"><button class="sm" onclick="saveTeam(${i})">Save</button> <button class="sm del" onclick="delTeam(${i})">Remove</button></td></tr>`).join(''):'<tr><td style="color:var(--mut)">No team members yet.</td></tr>';
-  $('sCols').innerHTML=columns.length?columns.map((c,i)=>`<tr><td style="width:34%">${esc(c.name)}</td><td>${esc(c.type)}${c.options&&c.options.length?' ('+esc(c.options.join(', '))+')':''}</td><td><button class="sm del" onclick="rmCol(${i})">Remove</button></td></tr>`).join(''):'<tr><td style="color:var(--mut)">No custom columns yet.</td></tr>';
-}
-function teamDone(r){team=r.team;renderSettings();renderAll(true);toast(r.notice)}
-function saveTeam(i){google.script.run.withSuccessHandler(teamDone).withFailureHandler(fail).apiSaveTeam(team[i].name,$('te_'+i).value)}
-function delTeam(i){if(!confirm('Remove '+team[i].name+' from the team list?'))return;google.script.run.withSuccessHandler(teamDone).withFailureHandler(fail).apiDeleteTeam(team[i].name)}
-function addTeam(){
-  const n=$('tn_name').value.trim();if(!n){toast('Please enter a name');return}
-  google.script.run.withSuccessHandler(r=>{$('tn_name').value='';$('tn_email').value='';teamDone(r)}).withFailureHandler(fail).apiSaveTeam(n,$('tn_email').value);
-}
-function colsDone(r){columns=r.columns;leads=r.leads;renderSettings();renderAll(true);toast(r.notice)}
-function addCol(){
-  const d={name:$('cn_name').value,type:$('cn_type').value,options:$('cn_opts').value};
-  if(!d.name.trim()){toast('Please enter a column name');return}
-  google.script.run.withSuccessHandler(r=>{$('cn_name').value='';$('cn_opts').value='';colsDone(r)}).withFailureHandler(fail).apiAddColumn(d);
-}
-function rmCol(i){if(!confirm('Remove "'+columns[i].name+'" from the app? The data stays in the sheet.'))return;google.script.run.withSuccessHandler(colsDone).withFailureHandler(fail).apiRemoveColumn(columns[i].name)}
 
 /* ---------- VOICE ADD (guided questions) ---------- */
 const SR_API=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -687,11 +350,14 @@ function voiceSave(){
   if(!o.Name){toast('Name is required');return}
   columns.forEach(c=>o.Custom[c.name]='');
   $('v_save').disabled=true;
-  google.script.run.withSuccessHandler(r=>{$('v_save').disabled=false;closeVoice();done(r,'✅ Lead added by voice')}).withFailureHandler(fail).apiSaveLead(o);
+  apiCall('save',{lead:o}).then(r=>{$('v_save').disabled=false;closeVoice();addedLog(o,r.notice)}).catch(fail);
 }
 
-['modal','dmodal','smodal'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target.id===id)$(id).style.display='none';if(id==='dmodal'&&e.target.id===id)detailId=null}));
-load();
+
+window.addEventListener('load',()=>{
+  $('c_url').value=store.get('crm_voice_url');$('c_key').value=store.get('crm_voice_key');
+  if($('c_url').value&&$('c_key').value)connect();
+});
 </script>
 </body>
 </html>
