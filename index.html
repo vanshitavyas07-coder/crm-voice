@@ -36,8 +36,9 @@ label{font-size:11px;color:var(--mut);display:block;margin-bottom:3px}
 <body>
 <header><h1>🎙 Voice Add Lead</h1><small>Smart Sales CRM</small></header>
 <main>
-  <div class="card">
-    <h3>1. Connect (one time per device)</h3>
+  <div class="card" id="connCard" style="display:none">
+    <h3>Connect</h3>
+    <p style="color:var(--mut);font-size:12px;margin:0 0 10px">Easiest way: open the CRM and click “🎙 Voice Add”. It opens this page already connected. Manual entry is only a fallback.</p>
     <div class="fg">
       <div class="full"><label>Web app URL (the deployment that is set to "Anyone")</label><input id="c_url" placeholder="https://script.google.com/macros/s/.../exec"></div>
       <div class="full"><label>API key (from createVoiceApiKey)</label><input id="c_key" type="password" placeholder="paste the key"></div>
@@ -46,7 +47,7 @@ label{font-size:11px;color:var(--mut);display:block;margin-bottom:3px}
     <div id="c_status" class="cs"></div>
   </div>
   <div class="card">
-    <h3>2. Add a lead</h3>
+    <h3>Add a lead</h3>
     <button class="big" id="startBtn" disabled onclick="openVoice()">🎙 Start voice entry</button>
     <p style="color:var(--mut);font-size:12px;margin:8px 0 0">Open this page in Chrome or Edge and allow the microphone when asked. On a phone, use “Add to Home screen” for one-tap access.</p>
   </div>
@@ -118,9 +119,19 @@ async function connect(){
   try{
     const r=await apiCall('init');
     team=(r.team||[]).map(n=>({name:n}));leads=(r.sources||[]).map(s=>({Source:s}));
-    $('startBtn').disabled=false;setConn('✅ Connected · '+team.length+' team members loaded','ok');
-  }catch(e){$('startBtn').disabled=true;setConn('❌ '+e.message,'warn')}
+    $('startBtn').disabled=false;setConn('✅ Connected · '+team.length+' team members loaded','ok');$('connCard').style.display='none';
+  }catch(e){$('startBtn').disabled=true;$('connCard').style.display='block';setConn('❌ '+e.message,'warn')}
 }
+/* Auto-connect: link from the CRM carries #url=...&key=... (saved once, then removed from the address bar) */
+(function autoConnect(){
+  try{
+    const p=new URLSearchParams(location.hash.replace(/^#/,''));
+    if(p.get('url')&&p.get('key')){store.set('crm_voice_url',p.get('url'));store.set('crm_voice_key',p.get('key'));history.replaceState(null,'',location.pathname+location.search)}
+  }catch(e){}
+  const u=store.get('crm_voice_url'),k=store.get('crm_voice_key');
+  if(u&&k){$('c_url').value=u;$('c_key').value=k;setConn('Connecting…');$('connCard').style.display='block';connect()}
+  else{$('connCard').style.display='block';setConn('Not connected. Please open this page from the CRM using the “🎙 Voice Add” button.','warn')}
+})();
 function addedLog(o,notice){
   const el=$('log');if(el.dataset.empty!=='0'){el.innerHTML='';el.dataset.empty='0'}
   const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
@@ -131,16 +142,16 @@ function addedLog(o,notice){
 /* ---------- VOICE ADD (guided questions) ---------- */
 const SR_API=window.SpeechRecognition||window.webkitSpeechRecognition;
 const VSTEPS=[
- {k:'Name',t:'name',req:true,q:"What is the contact person's name?",h:'Required'},
- {k:'Company',t:'name',q:'What is the company or brand name?',h:'Say skip if not known'},
- {k:'Phone',t:'phone',q:'What is the phone number? Please say the digits one by one.',h:'10-digit mobile number'},
- {k:'Email',t:'email',q:'What is the email address? Say skip if you do not have it.',h:'Say "at the rate" for @ and "dot" for .'},
- {k:'Source',t:'source',q:'How did this lead come to us? For example website, exhibition, referral or social media.',h:'Website, Exhibition, Referral, Social Media, IIJS…'},
- {k:'EnquiryFor',t:'enq',q:'What did they enquire about? Brand promotion, event and award participation, or content and thought leadership?',h:'You can say more than one'},
- {k:'Value',t:'value',q:'What is the expected deal value? For example two lakh.',h:'e.g. 2 lakh, 50 thousand, 1.5 lakh'},
- {k:'Owner',t:'owner',q:'Who should this lead be assigned to?',h:'Say the team member’s name, or skip'},
- {k:'NextFollowUp',t:'date',q:'When should we follow up? For example tomorrow, Friday, or 20 November.',h:'tomorrow · Friday · in 3 days · 20 November'},
- {k:'Notes',t:'text',q:'Any notes or feedback from the conversation? Say skip if none.',h:'Optional'}
+ {k:'Name',t:'name',req:true,q:'Name?',h:'Contact person name (required)'},
+ {k:'Company',t:'name',q:'Company?',h:'Say skip if not known'},
+ {k:'Phone',t:'phone',q:'Phone number?',h:'Say the digits one by one'},
+ {k:'Email',t:'email',q:'Email?',h:'Say "at the rate" for @ and "dot" for . (or skip)'},
+ {k:'Source',t:'source',q:'Source?',h:'Website, Exhibition, Referral, Social Media, IIJS…'},
+ {k:'EnquiryFor',t:'enq',q:'Enquiry for?',h:'Brand promotion, Event & award participation, Content & thought leadership'},
+ {k:'Value',t:'value',q:'Deal value?',h:'e.g. 2 lakh, 50 thousand, 1.5 lakh'},
+ {k:'Owner',t:'owner',q:'Assign to?',h:'Say the team member’s name, or skip'},
+ {k:'NextFollowUp',t:'date',q:'Follow-up date?',h:'tomorrow · Friday · in 3 days · 20 November'},
+ {k:'Notes',t:'text',q:'Notes?',h:'Optional, or skip'}
 ];
 /* VOICE-PARSERS-START */
 const SKIPRE=/^(skip|pass|none|no|nothing|next|na|n\/a|nahi|nahin|no email|no notes)$/i;
@@ -275,7 +286,7 @@ function vAsk(){
   const go=()=>{if(tok===vTok&&$('v_auto').checked&&!vMicBlocked&&SR_API)vListen()};
   if($('v_tts').checked&&window.speechSynthesis){
     speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance('Question '+(vqi+1)+'. '+s.q);u.lang='en-IN';u.onend=go;u.onerror=go;speechSynthesis.speak(u);
+    const u=new SpeechSynthesisUtterance(s.q);u.lang='en-IN';u.onend=go;u.onerror=go;speechSynthesis.speak(u);
   }else go();
 }
 function vListen(){
