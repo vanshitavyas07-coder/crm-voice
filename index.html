@@ -474,7 +474,7 @@ function vReview(){
     <div><label>Source</label><select id="v_Source"><option value="">— select —</option>${opts(srcs,a.Source)}</select></div>
     <div><label>Stage</label><select id="v_Stage">${opts(STAGES,'New')}</select></div>
     <div><label>Deal Value (₹)</label><input id="v_Value" type="number" min="0" value="${esc(a.Value)}"></div>
-    <div><label>Temperature</label><select id="v_Temperature"><option value="">— Not set —</option>${opts(['Hot','Warm','Cold'],a.Temperature)}</select></div>
+    <div><label>Lead Priority</label><select id="v_Temperature"><option value="">— Not set —</option>${opts(['Hot','Warm','Cold'],a.Temperature)}</select></div>
     <div><label>Owner</label><select id="v_Owner"><option value="">— Unassigned —</option>${opts(ownerNames(a.Owner),a.Owner)}</select></div>
     <div class="full"><label>Enquiry For</label><div class="chk" id="v_Enq">${ENQ.map(x=>`<label><input type="checkbox" value="${esc(x)}" ${sel.includes(x)?'checked':''}>${esc(x)}</label>`).join('')}</div></div>
     <div class="full"><label>Next Follow-up</label><input id="v_Date" type="date" value="${esc(a.NextFollowUp)}"></div>
@@ -529,7 +529,7 @@ function nExtract(){
   if(!text){toast('Please speak or type the lead details first');return}
   nStop();
   vAns=extractLead(text);
-  const L={Name:'Name',Phone:'Phone',Source:'Source',Value:'Deal value',Temperature:'Temperature',Owner:'Owner',NextFollowUp:'Follow-up date',EnquiryFor:'Enquiry for'};
+  const L={Name:'Name',Phone:'Phone',Source:'Source',Value:'Deal value',Temperature:'Lead priority',Owner:'Owner',NextFollowUp:'Follow-up date',EnquiryFor:'Enquiry for'};
   const miss=Object.keys(L).filter(k=>!vAns[k]).map(k=>L[k]);
   vNoteMsg=miss.length?('Not found in your note, please fill if needed: '+miss.join(', ')+'.'):'All details were found. Please still double-check them.';
   vMode='note';vReview();
