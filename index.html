@@ -48,7 +48,9 @@ label{font-size:11px;color:var(--mut);display:block;margin-bottom:3px}
   </div>
   <div class="card">
     <h3>Add a lead</h3>
-    <button class="big" id="startBtn" disabled onclick="openVoice()">🎙 Start voice entry</button>
+    <button class="big" id="noteBtn" disabled onclick="openNote()">🎤 Voice note (speak freely)</button>
+    <p style="color:var(--mut);font-size:12px;margin:6px 0 14px">Speak the whole lead in one go, like a voice note. The details are filled in automatically (no AI) and you check them before saving.</p>
+    <button class="big sec" id="startBtn" disabled onclick="openVoice()">🎙 Guided questions (one by one)</button>
     <p style="color:var(--mut);font-size:12px;margin:8px 0 0">Open this page in Chrome or Edge and allow the microphone when asked. On a phone, use “Add to Home screen” for one-tap access.</p>
   </div>
   <div class="card"><h3>Added in this session</h3><div id="log" style="color:var(--mut)">Nothing yet.</div></div>
@@ -78,11 +80,19 @@ label{font-size:11px;color:var(--mut);display:block;margin-bottom:3px}
     </div>
     <div style="margin-top:8px;font-size:11px;color:var(--mut)">Voice commands: say “skip”, “repeat” or “back”. Works best in Chrome or Edge.</div>
   </div>
+  <div id="v_note" style="display:none">
+    <p style="color:var(--mut);margin:10px 0;font-size:13px">Tap the mic and speak the lead like a voice note. Example: “New lead Rajesh Mehta from Mehta Jewels, phone 98765 43210, interested in brand promotion, budget two lakh, hot lead, assign to Ankita, follow up on Friday.” Then tap <b>Fill details</b>.</p>
+    <div style="display:flex;gap:10px;align-items:center;margin:10px 0"><button id="n_mic" class="mic" title="Start / stop recording" onclick="nToggle()">🎤</button><span id="n_status" class="vs">Tap the mic to start</span></div>
+    <textarea id="n_text" rows="6" placeholder="Your spoken words appear here. You can also type, or fix any wrong word."></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="sec" onclick="closeVoice()">Cancel</button> <button onclick="nExtract()">Fill details →</button></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--mut)">Speak in English or Hinglish (English letters). The page must hear you while you speak, so please speak while the mic is on. Works best in Chrome or Edge.</div>
+  </div>
   <div id="v_review" style="display:none">
     <p style="margin:10px 0;color:var(--mut)">Please check the details, fix anything that was misheard, and save.</p>
+    <p id="v_rnote" style="margin:0 0 10px;font-size:12px;color:var(--warn)"></p>
     <div id="v_rbody"></div>
     <div style="margin-top:14px;display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap">
-      <button class="sec" onclick="openVoice()">↺ Start again</button>
+      <span><button class="sec" onclick="restartVoice()">↺ Start again</button> <button class="sec" id="v_back" style="display:none" onclick="nBack()">← Edit text</button></span>
       <span><button class="sec" onclick="closeVoice()">Cancel</button> <button id="v_save" onclick="voiceSave()">Save lead</button></span>
     </div>
   </div>
@@ -100,7 +110,7 @@ const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Stri
 const opts=(a,sel)=>a.map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
 const ownerNames=cur=>[...new Set(team.map(t=>t.name).concat(cur?[cur]:[]))].sort();
 function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',4200)}
-function fail(e){document.querySelectorAll('button:disabled').forEach(b=>{if(b.id!=='startBtn')b.disabled=false});toast('❌ '+(e.message||e))}
+function fail(e){document.querySelectorAll('button:disabled').forEach(b=>{if(b.id!=='startBtn'&&b.id!=='noteBtn')b.disabled=false});toast('❌ '+(e.message||e))}
 const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
 
 async function apiCall(action,payload){
@@ -119,8 +129,8 @@ async function connect(){
   try{
     const r=await apiCall('init');
     team=(r.team||[]).map(n=>({name:n}));leads=(r.sources||[]).map(s=>({Source:s}));
-    $('startBtn').disabled=false;setConn('✅ Connected · '+team.length+' team members loaded','ok');$('connCard').style.display='none';
-  }catch(e){$('startBtn').disabled=true;$('connCard').style.display='block';setConn('❌ '+e.message,'warn')}
+    $('startBtn').disabled=false;$('noteBtn').disabled=false;setConn('✅ Connected · '+team.length+' team members loaded','ok');$('connCard').style.display='none';
+  }catch(e){$('startBtn').disabled=true;$('noteBtn').disabled=true;$('connCard').style.display='block';setConn('❌ '+e.message,'warn')}
 }
 /* Auto-connect: link from the CRM carries #url=...&key=... (saved once, then removed from the address bar) */
 (function autoConnect(){
@@ -149,6 +159,7 @@ const VSTEPS=[
  {k:'Source',t:'source',q:'Source?',h:'Website, Exhibition, Referral, Social Media, IIJS…'},
  {k:'EnquiryFor',t:'enq',q:'Enquiry for?',h:'Brand promotion, Event & award participation, Content & thought leadership'},
  {k:'Value',t:'value',q:'Deal value?',h:'e.g. 2 lakh, 50 thousand, 1.5 lakh'},
+ {k:'Temperature',t:'temp',q:'Hot, warm or cold?',h:'Hot = ready to buy · Warm = interested · Cold = just enquiry (or skip)'},
  {k:'Owner',t:'owner',q:'Assign to?',h:'Say the team member’s name, or skip'},
  {k:'NextFollowUp',t:'date',q:'Follow-up date?',h:'tomorrow · Friday · in 3 days · 20 November'},
  {k:'Notes',t:'text',q:'Notes?',h:'Optional, or skip'}
@@ -211,6 +222,13 @@ function pValue(t){
   total=Math.round(total);
   return found&&total>0?{value:String(total),show:'₹'+total.toLocaleString('en-IN'),ok:true}:{value:'',ok:false,msg:'Could not understand the amount. Say e.g. "two lakh" or "50 thousand".'};
 }
+function pTemp(t){
+  const l=String(t).toLowerCase();
+  if(/\b(hot|garam)\b/.test(l))return{value:'Hot',show:'Hot',ok:true};
+  if(/\b(warm|normal|medium)\b/.test(l))return{value:'Warm',show:'Warm',ok:true};
+  if(/\b(cold|thanda|thandi)\b/.test(l))return{value:'Cold',show:'Cold',ok:true};
+  return{value:'',ok:false,msg:'Please say hot, warm or cold (or say skip).'};
+}
 function pOwner(t){
   const l=String(t).toLowerCase();
   if(/\b(unassigned|nobody|no one)\b/.test(l))return{value:'',show:'Unassigned',ok:true};
@@ -255,23 +273,130 @@ function vParse(s,text){
     case 'enq':return pEnq(t);
     case 'value':return pValue(t);
     case 'owner':return pOwner(t);
+    case 'temp':return pTemp(t);
     case 'date':return pDate(t);
     default:{const v=t.charAt(0).toUpperCase()+t.slice(1);return{value:v,show:v,ok:true}}
   }
 }
+/* ===== VOICE NOTE: free speech -> lead fields (rule based, no AI) ===== */
+const N_STOP=new Set('from of at in on ki ka ke ko se mein main is are hai hain who he she they and company firm phone number mobile contact email mail interested wants want looking budget source enquiry inquiry follow followup call called meeting met spoke talked told said name naam lead new ne ji sir madam mam mr mrs ms miss the a an to for with about by hot warm cold assign assigned owner'.split(' '));
+const N_FILL=new Set('hi hello hey ok okay so this is new lead note voice a an the'.split(' '));
+function nTake(s,max){
+  const out=[];
+  for(const w of String(s).split(/\s+/)){const lw=w.toLowerCase().replace(/[^a-z]/g,'');if(!lw||N_STOP.has(lw)||out.length>=max)break;out.push(w)}
+  return out.join(' ');
+}
+function xEmail(t){
+  let m=t.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
+  if(m)return{v:m[0].toLowerCase(),rest:t.replace(m[0],' ')};
+  m=t.match(/([a-z0-9._-]+(?:\s+(?:dot|underscore|dash|hyphen)\s+[a-z0-9._-]+)*)\s+at\s+the\s+rate(?:\s+of)?\s+([a-z0-9-]+(?:\s+dot\s+[a-z0-9-]+)+)/i);
+  if(m){const r=pEmail(m[0]);return{v:r.ok?r.value:'',rest:t.replace(m[0],' ')}}
+  return{v:'',rest:t};
+}
+function xPhone(t){
+  let m=t.match(/(?:\+?\s*91[\s-]*)?([6-9](?:[\s-]?\d){9})(?!\d)/);
+  if(m){const d=m[1].replace(/\D/g,'');return{v:'91'+d,rest:t.replace(m[0],' ')}}
+  const tok=t.split(/\s+/),isD=w=>{w=w.toLowerCase().replace(/[^a-z0-9]/g,'');return /^\d+$/.test(w)||w==='double'||w==='triple'||w==='oh'||w==='shunya'||(Object.prototype.hasOwnProperty.call(NW,w)&&NW[w]<100)};
+  let best=null,i=0;
+  while(i<tok.length){if(isD(tok[i])){let j=i;while(j<tok.length&&isD(tok[j]))j++;if(j-i>=8&&(!best||j-i>best[1]-best[0]))best=[i,j];i=j}else i++}
+  if(best){const r=pPhone(tok.slice(best[0],best[1]).join(' '));if(r.ok)return{v:r.value,rest:tok.slice(0,best[0]).concat(tok.slice(best[1])).join(' ')}}
+  return{v:'',rest:t};
+}
+function xName(t){
+  const pats=[
+    /\b(?:name|naam)\s+(?:is\s+|hai\s+)?([a-z][a-z .'-]*)/i,
+    /\b(?:lead|contact|client|customer|person|party)\s+(?:is\s+|hai\s+)?([a-z][a-z .'-]*)/i,
+    /\b(?:mr|mrs|ms|miss|shri|smt)\.?\s+([a-z][a-z .'-]*)/i,
+    /\b(?:met|spoke\s+(?:to|with)|talked\s+(?:to|with)|called|baat\s+(?:ki|hui)\s+(?:with\s+)?)\s+([a-z][a-z .'-]*)/i
+  ];
+  for(const p of pats){const m=t.match(p);if(m){const n=nTake(m[1],3);if(n)return tc(n)}}
+  const words=t.trim().split(/\s+/);let k=0;
+  while(k<words.length&&N_FILL.has(words[k].toLowerCase().replace(/[^a-z]/g,'')))k++;
+  const n=nTake(words.slice(k).join(' '),3);
+  return n?tc(n):'';
+}
+const CO_KW='jewellers?|jewelers?|jewels|jewellery|jewelry|diamonds?|gems?|exports?|imports?|industries|enterprises?|group|brothers|bros|international|creations?|designs?|gold|silver|house|traders?|manufacturers?|corporation|retail|stores?|showroom|pvt|private|limited|ltd|llp|co|company';
+function xCompany(t){
+  let m=t.match(/\b(?:company|firm|organisation|organization)\s+(?:name\s+)?(?:is\s+|hai\s+)?([a-z][a-z&.' -]*)/i);
+  if(m){const c=nTake(m[1],4);if(c)return tc(c)}
+  m=t.match(new RegExp("([a-z&'.-]+(?:\\s+[a-z&'.-]+){0,2}\\s+(?:"+CO_KW+")(?:\\s+(?:pvt|private|ltd|limited|llp))*)\\b",'i'));
+  if(m){
+    let w=m[1].split(/\s+/);
+    const CUT=new Set('from at se ka ki ke is hai name ne ji mein main and'.split(' '));
+    for(let i=w.length-2;i>=0;i--){if(CUT.has(w[i].toLowerCase().replace(/[^a-z]/g,''))){w=w.slice(i+1);break}}
+    while(w.length>1&&(N_STOP.has(w[0].toLowerCase().replace(/[^a-z]/g,''))||N_FILL.has(w[0].toLowerCase())))w.shift();
+    return tc(w.join(' '));
+  }
+  return '';
+}
+function xValue(t){
+  const U='crores|crore|cr|lakhs|lakh|lacs|lac|thousand|k|hazaar|hazar|million',M={crore:1e7,crores:1e7,cr:1e7,lakh:1e5,lakhs:1e5,lac:1e5,lacs:1e5,thousand:1e3,k:1e3,hazaar:1e3,hazar:1e3,million:1e6};
+  const l=wordsToNum(t.toLowerCase().replace(/[₹,]/g,'').replace(/\b(rs\.?|rupees?|inr)\b/g,' '));
+  const m=new RegExp('((?:\\d+(?:\\.\\d+)?\\s*(?:'+U+')\\b\\s*)+)').exec(l);
+  if(m){
+    let total=0,x;const re=new RegExp('(\\d+(?:\\.\\d+)?)\\s*('+U+')\\b','g');
+    while((x=re.exec(m[1])))total+=parseFloat(x[1])*M[x[2]];
+    total=Math.round(total);if(total>0)return String(total);
+  }
+  const f=t.toLowerCase().replace(/,/g,'').match(/(?:budget|value|deal|amount|worth|rs\.?|rupees|₹)\D{0,12}(\d{5,9})/);
+  return f?f[1]:'';
+}
+function xDate(t){
+  const clean=t.toLowerCase().replace(/\d+(?:\.\d+)?\s*(?:crores?|cr|lakhs?|lacs?|thousand|k|hazaar)\b/g,' ');
+  const segs=[];let m;const re=/(?:follow\s?-?up|call\s?back|call|remind(?:er)?|meet(?:ing)?|visit|phone|contact|baat|milna|vapas|revert)\b[^.]{0,70}/gi;
+  while((m=re.exec(clean)))segs.push(m[0]);
+  segs.push(clean);
+  for(const s of segs){const r=pDate(s);if(r.ok&&r.value)return r.value}
+  return '';
+}
+function xOwner(t){
+  const segs=[];let m;
+  const re1=/\b(?:assign(?:ed)?(?:\s+(?:this|it|the\s+lead))?(?:\s+to)?|owner(?:\s+is)?|give(?:\s+it)?\s+to|hand\s?over\s+to|forward(?:ed)?\s+to|allot(?:ted)?\s+to)\s+([a-z]+(?:\s+[a-z]+)?)/gi;
+  while((m=re1.exec(t)))segs.push(m[1]);
+  const re2=/\b([a-z]+(?:\s+[a-z]+)?)\s+ko\s+(?:assign|de\s+do|dena|de\s+dena|dijiye|bhej)/gi;
+  while((m=re2.exec(t)))segs.push(m[1]);
+  for(const s of segs){const r=pOwner(s);if(r.ok&&r.value)return r.value}
+  return '';
+}
+function xSource(t){
+  const cue=t.match(/\b(?:source|came\s+from|came\s+through|via|through|found\s+us|saw\s+us|heard\s+about\s+us|referred\s+by|reference|referral|aaya|aayi)\b.{0,45}/i);
+  if(cue){const r=pSource(cue[0]);if(r.ok)return r.value}
+  const r=pSource(t);
+  return r.ok&&!/^(Exhibition|Website|Competitor Magazine|Other)$/.test(r.value)?r.value:'';
+}
+function extractLead(text){
+  const raw=String(text||'').replace(/\s+/g,' ').trim();
+  let t=' '+raw+' ';
+  const a={};
+  const em=xEmail(t);a.Email=em.v;t=em.rest;
+  const ph=xPhone(t);a.Phone=ph.v;t=ph.rest;
+  a.Name=xName(t);a.Company=xCompany(t);
+  a.Value=xValue(t);
+  const tt=t.replace(/\b(cold|warm)\s+(call|calling|mail|email)\b/gi,' ');
+  const tr=pTemp(tt);a.Temperature=tr.ok?tr.value:'';
+  a.Owner=xOwner(t);
+  a.Source=xSource(t);
+  const eq=pEnq(t);a.EnquiryFor=eq.ok?eq.value.split(', ').filter(x=>x!=='Other').join(', '):'';
+  a.NextFollowUp=xDate(t);
+  a.Notes='['+ymd(new Date())+' · Voice note] '+raw;
+  return a;
+}
+
 /* VOICE-PARSERS-END */
 
+let vMode='q',vNoteMsg='',nRec=null,nOn=false,nBase='';
 let vqi=0,vAns={},vRaw={},vRec=null,vTimer=null,vTok=0,vMicBlocked=false,vHeard=false,vErr=false;
 function vStatus(m,cls){const e=$('v_status');e.textContent=m;e.className='vs '+(cls||'')}
 function vCancelSpeech(){vTok++;clearTimeout(vTimer);if(window.speechSynthesis)speechSynthesis.cancel();vStop()}
 function openVoice(){
+  vMode='q';$('v_note').style.display='none';nStop();
   vqi=0;vAns={};vRaw={};vMicBlocked=false;vCancelSpeech();
   $('v_ask').style.display='block';$('v_review').style.display='none';
   $('vmodal').style.display='flex';
   if(!SR_API)toast('Voice input is not supported in this browser. You can still type the answers (Chrome or Edge recommended).');
   vRender();
 }
-function closeVoice(){vCancelSpeech();$('vmodal').style.display='none'}
+function closeVoice(){nStop();vCancelSpeech();$('vmodal').style.display='none'}
 function vRender(){
   const s=VSTEPS[vqi];
   $('v_prog').style.width=(vqi/VSTEPS.length*100)+'%';
@@ -337,7 +462,8 @@ function vNext(){
   if(vqi>=VSTEPS.length)vReview();else vRender();
 }
 function vReview(){
-  const a=vAns;$('v_ask').style.display='none';$('v_review').style.display='block';
+  const a=vAns;$('v_ask').style.display='none';$('v_note').style.display='none';$('v_review').style.display='block';
+  $('v_rnote').textContent=vMode==='note'?vNoteMsg:'';$('v_back').style.display=vMode==='note'?'':'none';
   const srcs=[...new Set(SOURCES.concat(leads.map(x=>x.Source).filter(Boolean)))];
   const sel=(a.EnquiryFor||'').split(', ').filter(Boolean);
   $('v_rbody').innerHTML=`<div class="fg">
@@ -348,15 +474,69 @@ function vReview(){
     <div><label>Source</label><select id="v_Source"><option value="">— select —</option>${opts(srcs,a.Source)}</select></div>
     <div><label>Stage</label><select id="v_Stage">${opts(STAGES,'New')}</select></div>
     <div><label>Deal Value (₹)</label><input id="v_Value" type="number" min="0" value="${esc(a.Value)}"></div>
+    <div><label>Temperature</label><select id="v_Temperature"><option value="">— Not set —</option>${opts(['Hot','Warm','Cold'],a.Temperature)}</select></div>
     <div><label>Owner</label><select id="v_Owner"><option value="">— Unassigned —</option>${opts(ownerNames(a.Owner),a.Owner)}</select></div>
     <div class="full"><label>Enquiry For</label><div class="chk" id="v_Enq">${ENQ.map(x=>`<label><input type="checkbox" value="${esc(x)}" ${sel.includes(x)?'checked':''}>${esc(x)}</label>`).join('')}</div></div>
     <div class="full"><label>Next Follow-up</label><input id="v_Date" type="date" value="${esc(a.NextFollowUp)}"></div>
     <div class="full"><label>Team Feedback / Notes</label><textarea id="v_Notes" rows="3">${esc(a.Notes)}</textarea></div>
   </div>`;
 }
+function restartVoice(){if(vMode==='note'){$('n_text').value='';openNote()}else openVoice()}
+
+/* ---------- voice note (free speaking) ---------- */
+function openNote(){
+  vMode='note';vCancelSpeech();nStop();
+  $('v_ask').style.display='none';$('v_review').style.display='none';$('v_note').style.display='block';
+  $('vmodal').style.display='flex';$('n_status').textContent=SR_API?'Tap the mic to start':'Voice input is not supported here. Please type the details.';
+  $('n_status').className='vs';
+}
+function nBack(){$('v_review').style.display='none';$('v_note').style.display='block'}
+function nToggle(){if(nOn)nStop();else nStart()}
+function nStart(){
+  if(!SR_API){toast('Voice input is not supported in this browser. Please use Chrome or Edge, or type the details.');return}
+  if(nOn)return;
+  nOn=true;nBase=$('n_text').value.trim();
+  $('n_mic').classList.add('rec');$('n_status').textContent='🎤 Recording… speak naturally, tap the mic again to stop';$('n_status').className='vs ok';
+  nRun();
+}
+function nRun(){
+  const r=new SR_API();nRec=r;r.lang='en-IN';r.continuous=true;r.interimResults=true;
+  r.onresult=e=>{
+    let fin='',interim='';
+    for(let i=0;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t+' ';else interim+=t}
+    $('n_text').value=(nBase+' '+fin+interim).replace(/\s+/g,' ').trim();
+  };
+  r.onerror=e=>{
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){nOn=false;$('n_mic').classList.remove('rec');$('n_status').textContent='Microphone is blocked. Please allow the microphone for this page, or type the details.';$('n_status').className='vs warn'}
+    else if(e.error!=='no-speech'&&e.error!=='aborted'){$('n_status').textContent='Voice error: '+e.error+'. You can type the details.';$('n_status').className='vs warn'}
+  };
+  r.onend=()=>{
+    if(nRec!==r)return;
+    nBase=$('n_text').value.trim();
+    if(nOn)setTimeout(()=>{if(nOn)nRun()},250);
+    else{$('n_mic').classList.remove('rec')}
+  };
+  try{r.start()}catch(e){nOn=false;$('n_mic').classList.remove('rec');$('n_status').textContent='Could not start the microphone. Please type the details.';$('n_status').className='vs warn'}
+}
+function nStop(){
+  nOn=false;
+  if(nRec){const r=nRec;nRec=null;try{r.stop()}catch(e){}}
+  const m=$('n_mic');if(m)m.classList.remove('rec');
+  const s=$('n_status');if(s&&s.className.indexOf('ok')>=0){s.textContent='Stopped. Check the text, then tap Fill details.';s.className='vs'}
+}
+function nExtract(){
+  const text=$('n_text').value.trim();
+  if(!text){toast('Please speak or type the lead details first');return}
+  nStop();
+  vAns=extractLead(text);
+  const L={Name:'Name',Phone:'Phone',Source:'Source',Value:'Deal value',Temperature:'Temperature',Owner:'Owner',NextFollowUp:'Follow-up date',EnquiryFor:'Enquiry for'};
+  const miss=Object.keys(L).filter(k=>!vAns[k]).map(k=>L[k]);
+  vNoteMsg=miss.length?('Not found in your note, please fill if needed: '+miss.join(', ')+'.'):'All details were found. Please still double-check them.';
+  vMode='note';vReview();
+}
 function voiceSave(){
   const o={Name:$('v_Name').value.trim(),Company:$('v_Company').value.trim(),Phone:$('v_Phone').value.trim(),Email:$('v_Email').value.trim(),
-    Source:$('v_Source').value,Stage:$('v_Stage').value,Value:$('v_Value').value,Owner:$('v_Owner').value,NextFollowUp:$('v_Date').value,
+    Source:$('v_Source').value,Stage:$('v_Stage').value,Value:$('v_Value').value,Owner:$('v_Owner').value,Temperature:$('v_Temperature').value,NextFollowUp:$('v_Date').value,
     Notes:$('v_Notes').value,EnquiryFor:[...document.querySelectorAll('#v_Enq input:checked')].map(x=>x.value).join(', '),EnquiryDetails:'',Custom:{}};
   if(!o.Name){toast('Name is required');return}
   columns.forEach(c=>o.Custom[c.name]='');
@@ -365,10 +545,6 @@ function voiceSave(){
 }
 
 
-window.addEventListener('load',()=>{
-  $('c_url').value=store.get('crm_voice_url');$('c_key').value=store.get('crm_voice_key');
-  if($('c_url').value&&$('c_key').value)connect();
-});
 </script>
 </body>
 </html>
